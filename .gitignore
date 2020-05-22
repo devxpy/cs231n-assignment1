@@ -1,2 +1,3 @@
 .ipynb_checkpoints
 cs231n/datasets
+__pycache__/

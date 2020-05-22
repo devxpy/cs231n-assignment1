@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from past.builtins import xrange
 from .softmax import softmax_loss_vectorized
-
+from copy import deepcopy
 
 
 
@@ -152,8 +152,8 @@ class TwoLayerNet(object):
 
     def train(self, X, y, X_val, y_val,
               learning_rate=1e-3, learning_rate_decay=0.95,
-              reg=5e-6, num_iters=100,
-              batch_size=200, verbose=False):
+              reg=5e-6, num_epochs=100,
+              batch_size=200, verbose=False, tp=None):
         """
         Train this neural network using stochastic gradient descent.
 
@@ -178,8 +178,10 @@ class TwoLayerNet(object):
         loss_history = []
         train_acc_history = []
         val_acc_history = []
-
-        for it in range(num_iters):
+        best_val_acc = 0
+        best_params = deepcopy(self.params)
+        
+        for it in range(int(iterations_per_epoch * num_epochs)):
             X_batch = None
             y_batch = None
 
@@ -212,9 +214,6 @@ class TwoLayerNet(object):
 
             # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-            if verbose and it % 100 == 0:
-                print('iteration %d / %d: loss %f' % (it, num_iters, loss))
-
             # Every epoch, check train and val accuracy and decay learning rate.
             if it % iterations_per_epoch == 0:
                 # Check accuracy
@@ -225,7 +224,23 @@ class TwoLayerNet(object):
 
                 # Decay learning rate
                 learning_rate *= learning_rate_decay
+                
+                c = 0
+                if val_acc > best_val_acc:
+                    c = 1
+                    best_val_acc = val_acc
+                    best_params = deepcopy(self.params)
+                    
+                epoch = it // iterations_per_epoch
+                if tp is not None:
+                    tp.insert(epoch, val_acc, c)
+            
+                if verbose:
+                    print('epoch %d / %d: loss %f' % (epoch, num_epochs, loss))
 
+        
+        self.params = best_params
+        
         return {
           'loss_history': loss_history,
           'train_acc_history': train_acc_history,
